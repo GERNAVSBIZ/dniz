@@ -56,6 +56,13 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
         }
 
+        .glass-modal {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
         /* Hover animations and custom glow effects for categories */
         .card-glow-blue:hover {
             box-shadow: 0 0 25px rgba(59, 130, 246, 0.25);
@@ -178,22 +185,30 @@
     <!-- Main Content -->
     <main class="flex-grow container mx-auto px-6 py-8 max-w-7xl">
         
-        <!-- Controls Section: Search & Category Tabs -->
+        <!-- Controls Section: Search, Add Link & Category Tabs -->
         <div class="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 mb-10">
             <!-- Dynamic Category Selector -->
             <div id="category-tabs" class="flex flex-wrap items-center gap-2 p-1.5 bg-slate-900/60 border border-slate-800/80 rounded-xl max-w-full overflow-x-auto">
                 <!-- Rendered dynamically -->
             </div>
 
-            <!-- Search Bar -->
-            <div class="relative min-w-[300px]">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
-                    <i data-lucide="search" class="h-4 w-4"></i>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <!-- Search Bar -->
+                <div class="relative min-w-[260px] flex-grow">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                        <i data-lucide="search" class="h-4 w-4"></i>
+                    </div>
+                    <input type="text" id="searchInput" placeholder="Buscar sistema..." 
+                        class="block w-full pl-10 pr-10 py-2.5 bg-slate-900/50 hover:bg-slate-900/70 focus:bg-slate-950/80 border border-slate-800 rounded-xl leading-5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/85 shadow-lg transition duration-200 sm:text-sm">
+                    <button id="clearSearch" class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-300 transition-colors">
+                        <i data-lucide="x" class="h-4 w-4"></i>
+                    </button>
                 </div>
-                <input type="text" id="searchInput" placeholder="Buscar sistema..." 
-                    class="block w-full pl-10 pr-10 py-2.5 bg-slate-900/50 hover:bg-slate-900/70 focus:bg-slate-950/80 border border-slate-800 rounded-xl leading-5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/85 shadow-lg transition duration-200 sm:text-sm">
-                <button id="clearSearch" class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 hover:text-slate-300 transition-colors">
-                    <i data-lucide="x" class="h-4 w-4"></i>
+
+                <!-- Add System Button -->
+                <button id="openAddModalBtn" class="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-600/20 transition-all duration-200 whitespace-nowrap active:scale-95 border border-blue-400/20">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i>
+                    <span>Adicionar Link</span>
                 </button>
             </div>
         </div>
@@ -238,6 +253,88 @@
         </div>
     </main>
 
+    <!-- Modal para Adicionar Novo Link/Sistema -->
+    <div id="addSystemModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300">
+        <div class="glass-modal w-full max-w-lg rounded-2xl shadow-2xl p-6 relative overflow-hidden border border-slate-700/50">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-800">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-slate-100 font-outfit">Adicionar Novo Sistema / Link</h3>
+                        <p class="text-xs text-slate-400">Insira as informações do atalho que deseja adicionar ao portal</p>
+                    </div>
+                </div>
+                <button id="closeAddModalBtn" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form -->
+            <form id="addSystemForm" class="space-y-4">
+                <div>
+                    <label for="sysTitle" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Título do Sistema *</label>
+                    <input type="text" id="sysTitle" required placeholder="Ex: REDEMET, SISCEAB..."
+                        class="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <div>
+                    <label for="sysUrl" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Endereço URL *</label>
+                    <input type="url" id="sysUrl" required placeholder="https://exemplo.com ou http://10.X.X.X"
+                        class="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <div>
+                    <label for="sysDescription" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Descrição</label>
+                    <textarea id="sysDescription" rows="2" placeholder="Breve resumo da finalidade do sistema..."
+                        class="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label for="sysCategory" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Categoria</label>
+                        <select id="sysCategory" class="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="operacional">Operacional</option>
+                            <option value="meteorologia">Meteorologia</option>
+                            <option value="administrativo">Administrativo</option>
+                            <option value="desenvolvimento">Desenvolvimento</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="sysIcon" class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-1.5">Ícone Visual</label>
+                        <select id="sysIcon" class="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-700/80 rounded-xl text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="link">Link (Padrão)</option>
+                            <option value="external-link">Link Externo</option>
+                            <option value="globe">Globo / Web</option>
+                            <option value="key-round">Chave / Acesso</option>
+                            <option value="shield-check">Escudo / Segurança</option>
+                            <option value="activity">Atividade / Monitoramento</option>
+                            <option value="database">Banco de Dados</option>
+                            <option value="file-text">Documentos</option>
+                            <option value="terminal">Servidor / Terminal</option>
+                            <option value="brain">Inteligência Artificial</option>
+                            <option value="star">Destaque</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Form Buttons -->
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-800 mt-6">
+                    <button type="button" id="cancelAddModalBtn" class="px-4 py-2 text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-600/20 transition-all duration-200 active:scale-95 flex items-center gap-2">
+                        <i data-lucide="check" class="w-4 h-4"></i>
+                        <span>Salvar Sistema</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-slate-950/40 border-t border-slate-900 py-8 mt-12 backdrop-blur-sm">
         <div class="container mx-auto px-6 max-w-7xl">
@@ -258,8 +355,8 @@
     </footer>
 
     <script>
-        // --- CONFIGURAÇÃO DOS SISTEMAS ---
-        const systemsData = [
+        // --- CONFIGURAÇÃO DOS SISTEMAS PADRÃO ---
+        const defaultSystemsData = [
             {
                 id: "analise-trafego",
                 title: "Análise de Tráfego",
@@ -293,6 +390,18 @@
                 color: "text-red-400",
                 bg: "bg-red-500/10 border-red-500/20",
                 glowClass: "card-glow-red",
+                category: "operacional",
+                categoryLabel: "Operacional"
+            },
+            {
+                id: "controle-acesso",
+                title: "Controle de Acesso",
+                url: "https://gernavsbiz.github.io/controleacesso/",
+                description: "Sistema de gestão e controle de acesso a instalações e áreas restritas da unidade.",
+                icon: "key-round",
+                color: "text-emerald-400",
+                bg: "bg-emerald-500/10 border-emerald-500/20",
+                glowClass: "card-glow-emerald",
                 category: "operacional",
                 categoryLabel: "Operacional"
             },
@@ -407,6 +516,11 @@
         let currentCategory = "all";
         let searchText = "";
         let favorites = JSON.parse(localStorage.getItem('portal_dniz_favorites') || '[]');
+        let customSystems = JSON.parse(localStorage.getItem('portal_dniz_custom_systems') || '[]');
+
+        function getAllSystems() {
+            return [...defaultSystemsData, ...customSystems];
+        }
 
         // --- ELEMENTOS DO DOM ---
         const grid = document.getElementById('systems-grid');
@@ -418,6 +532,13 @@
         const systemsCount = document.getElementById('systems-count');
         const gridTitle = document.getElementById('grid-title');
         const categoryTabsContainer = document.getElementById('category-tabs');
+
+        // Modal Elements
+        const addSystemModal = document.getElementById('addSystemModal');
+        const openAddModalBtn = document.getElementById('openAddModalBtn');
+        const closeAddModalBtn = document.getElementById('closeAddModalBtn');
+        const cancelAddModalBtn = document.getElementById('cancelAddModalBtn');
+        const addSystemForm = document.getElementById('addSystemForm');
 
         // --- LÓGICA DE FAVORITOS ---
         function toggleFavorite(e, id) {
@@ -435,14 +556,30 @@
             renderDashboard();
         }
 
+        // --- LÓGICA DE EXCLUSÃO DE SISTEMA PERSONALIZADO ---
+        function deleteCustomSystem(e, id) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (confirm("Deseja realmente remover este atalho personalizado?")) {
+                customSystems = customSystems.filter(sys => sys.id !== id);
+                favorites = favorites.filter(favId => favId !== id);
+                localStorage.setItem('portal_dniz_custom_systems', JSON.stringify(customSystems));
+                localStorage.setItem('portal_dniz_favorites', JSON.stringify(favorites));
+                renderCategories();
+                renderDashboard();
+            }
+        }
+
         // --- RENDERIZAR ABAS DE CATEGORIAS ---
         function renderCategories() {
             categoryTabsContainer.innerHTML = '';
+            const allSystems = getAllSystems();
             
             categories.forEach(cat => {
                 const count = cat.id === 'all' 
-                    ? systemsData.length 
-                    : systemsData.filter(s => s.category === cat.id).length;
+                    ? allSystems.length 
+                    : allSystems.filter(s => s.category === cat.id).length;
 
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -484,6 +621,12 @@
             else if (sys.category === 'administrativo') badgeColorClass = "bg-purple-500/10 text-purple-400 border-purple-500/20";
             else if (sys.category === 'desenvolvimento') badgeColorClass = "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
 
+            const deleteButtonHtml = sys.isCustom ? `
+                <button onclick="deleteCustomSystem(event, '${sys.id}')" class="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-500 hover:text-rose-400 hover:border-rose-500/30 transition-all duration-200 shadow-sm flex items-center justify-center ml-1" title="Excluir atalho personalizado">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            ` : '';
+
             return `
                 <a href="${sys.url}" target="_blank" class="block glass-card rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden ${sys.glowClass}">
                     <!-- Card Background Glow Effect on Hover -->
@@ -495,23 +638,26 @@
                             <i data-lucide="${sys.icon}" class="w-6 h-6"></i>
                         </div>
                         
-                        <div class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-1.5">
                             <!-- Category Badge -->
                             <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeColorClass} uppercase tracking-wider">
                                 ${catLabel}
                             </span>
                             
                             <!-- Star Favorite Button -->
-                            <button onclick="toggleFavorite(event, '${sys.id}')" class="p-1.5 rounded-lg border border-slate-855 bg-slate-900/60 text-slate-500 hover:text-amber-400 hover:border-amber-500/25 transition-all duration-200 shadow-sm flex items-center justify-center" title="${isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
+                            <button onclick="toggleFavorite(event, '${sys.id}')" class="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-500 hover:text-amber-400 hover:border-amber-500/25 transition-all duration-200 shadow-sm flex items-center justify-center" title="${isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}">
                                 <i data-lucide="star" class="w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>
                             </button>
+
+                            ${deleteButtonHtml}
                         </div>
                     </div>
                     
                     <!-- Title -->
                     <div class="flex items-center justify-between mb-2 relative z-10">
-                        <h3 class="text-base font-bold text-slate-200 group-hover:text-white transition-colors tracking-tight font-outfit">
-                            ${sys.title}
+                        <h3 class="text-base font-bold text-slate-200 group-hover:text-white transition-colors tracking-tight font-outfit flex items-center gap-2">
+                            <span>${sys.title}</span>
+                            ${sys.isCustom ? '<span class="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.2 rounded border border-blue-500/30">Personalizado</span>' : ''}
                         </h3>
                         <div class="opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 text-slate-400">
                             <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
@@ -527,8 +673,10 @@
         }
 
         function renderDashboard() {
+            const allSystems = getAllSystems();
+
             // 1. Renderiza Favoritos
-            const favSystems = systemsData.filter(sys => favorites.includes(sys.id));
+            const favSystems = allSystems.filter(sys => favorites.includes(sys.id));
             if (favSystems.length > 0) {
                 favoritesSection.classList.remove('hidden');
                 favoritesGrid.innerHTML = favSystems.map(sys => createCardHtml(sys, true)).join('');
@@ -538,7 +686,7 @@
             }
 
             // 2. Filtra Sistemas Principais
-            let filtered = systemsData;
+            let filtered = allSystems;
             
             // Filtro por Categoria
             if (currentCategory !== 'all') {
@@ -573,6 +721,87 @@
             // Recria ícones Lucide no DOM dinâmico
             lucide.createIcons();
         }
+
+        // --- MANIPULAÇÃO DO MODAL DE ADIÇÃO DE LINK ---
+        function openModal() {
+            addSystemModal.classList.remove('hidden');
+            document.getElementById('sysTitle').focus();
+        }
+
+        function closeModal() {
+            addSystemModal.classList.add('hidden');
+            addSystemForm.reset();
+        }
+
+        openAddModalBtn.addEventListener('click', openModal);
+        closeAddModalBtn.addEventListener('click', closeModal);
+        cancelAddModalBtn.addEventListener('click', closeModal);
+
+        // Fechar ao clicar fora da caixa do modal
+        addSystemModal.addEventListener('click', (e) => {
+            if (e.target === addSystemModal) {
+                closeModal();
+            }
+        });
+
+        // Adicionar novo sistema via formulário
+        addSystemForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('sysTitle').value.trim();
+            const url = document.getElementById('sysUrl').value.trim();
+            const description = document.getElementById('sysDescription').value.trim() || "Link direto inserido pelo usuário.";
+            const category = document.getElementById('sysCategory').value;
+            const icon = document.getElementById('sysIcon').value;
+
+            if (!title || !url) return;
+
+            const categoryConfig = categories.find(c => c.id === category);
+
+            // Definição de cores baseadas na categoria
+            let color = "text-blue-400";
+            let bg = "bg-blue-500/10 border-blue-500/20";
+            let glowClass = "card-glow-blue";
+
+            if (category === 'operacional') {
+                color = "text-emerald-400";
+                bg = "bg-emerald-500/10 border-emerald-500/20";
+                glowClass = "card-glow-emerald";
+            } else if (category === 'meteorologia') {
+                color = "text-sky-400";
+                bg = "bg-sky-500/10 border-sky-500/20";
+                glowClass = "card-glow-sky";
+            } else if (category === 'administrativo') {
+                color = "text-purple-400";
+                bg = "bg-purple-500/10 border-purple-500/20";
+                glowClass = "card-glow-purple";
+            } else if (category === 'desenvolvimento') {
+                color = "text-indigo-400";
+                bg = "bg-indigo-500/10 border-indigo-500/20";
+                glowClass = "card-glow-indigo";
+            }
+
+            const newSystem = {
+                id: "custom-" + Date.now(),
+                title: title,
+                url: url,
+                description: description,
+                icon: icon,
+                color: color,
+                bg: bg,
+                glowClass: glowClass,
+                category: category,
+                categoryLabel: categoryConfig ? categoryConfig.label : category,
+                isCustom: true
+            };
+
+            customSystems.push(newSystem);
+            localStorage.setItem('portal_dniz_custom_systems', JSON.stringify(customSystems));
+
+            closeModal();
+            renderCategories();
+            renderDashboard();
+        });
 
         // --- RELÓGIO E DATA ---
         function updateClock() {
