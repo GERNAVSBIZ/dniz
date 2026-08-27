@@ -194,7 +194,7 @@
 
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                 <!-- Search Bar -->
-                <div class="relative min-w-[260px] flex-grow">
+                <div class="relative min-w-[240px] flex-grow">
                     <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
                         <i data-lucide="search" class="h-4 w-4"></i>
                     </div>
@@ -204,6 +204,12 @@
                         <i data-lucide="x" class="h-4 w-4"></i>
                     </button>
                 </div>
+
+                <!-- Reset to Defaults Button -->
+                <button id="resetSystemsBtn" class="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-900/50 hover:bg-slate-900/85 text-slate-400 hover:text-slate-200 text-sm font-semibold rounded-xl border border-slate-800 shadow-md transition-all duration-200 whitespace-nowrap active:scale-95" title="Restaurar todos os atalhos para as configurações de fábrica">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    <span>Restaurar Padrões</span>
+                </button>
 
                 <!-- Add System Button -->
                 <button id="openAddModalBtn" class="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-600/20 transition-all duration-200 whitespace-nowrap active:scale-95 border border-blue-400/20">
@@ -253,7 +259,7 @@
         </div>
     </main>
 
-    <!-- Modal para Adicionar Novo Link/Sistema -->
+    <!-- Modal para Adicionar/Editar Novo Link/Sistema -->
     <div id="addSystemModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden transition-opacity duration-300">
         <div class="glass-modal w-full max-w-lg rounded-2xl shadow-2xl p-6 relative overflow-hidden border border-slate-700/50">
             <!-- Modal Header -->
@@ -317,6 +323,7 @@
                             <option value="terminal">Servidor / Terminal</option>
                             <option value="brain">Inteligência Artificial</option>
                             <option value="star">Destaque</option>
+                            <option value="navigation">Navegador / Rota</option>
                         </select>
                     </div>
                 </div>
@@ -356,7 +363,7 @@
 
     <script>
         // --- CONFIGURAÇÃO DOS SISTEMAS PADRÃO ---
-        const defaultSystemsData = [
+        const defaultSystemsList = [
             {
                 id: "analise-trafego",
                 title: "Análise de Tráfego",
@@ -528,11 +535,15 @@
         let currentCategory = "all";
         let searchText = "";
         let favorites = JSON.parse(localStorage.getItem('portal_dniz_favorites') || '[]');
-        let customSystems = JSON.parse(localStorage.getItem('portal_dniz_custom_systems') || '[]');
-
-        function getAllSystems() {
-            return [...defaultSystemsData, ...customSystems];
+        
+        // Inicializa a lista de sistemas do LocalStorage ou com os padrões se estiver vazio
+        let systems = JSON.parse(localStorage.getItem('portal_dniz_systems'));
+        if (!systems || systems.length === 0) {
+            systems = [...defaultSystemsList];
+            localStorage.setItem('portal_dniz_systems', JSON.stringify(systems));
         }
+
+        let editingSystemId = null;
 
         // --- ELEMENTOS DO DOM ---
         const grid = document.getElementById('systems-grid');
@@ -544,6 +555,7 @@
         const systemsCount = document.getElementById('systems-count');
         const gridTitle = document.getElementById('grid-title');
         const categoryTabsContainer = document.getElementById('category-tabs');
+        const resetSystemsBtn = document.getElementById('resetSystemsBtn');
 
         // Modal Elements
         const addSystemModal = document.getElementById('addSystemModal');
@@ -568,16 +580,57 @@
             renderDashboard();
         }
 
-        // --- LÓGICA DE EXCLUSÃO DE SISTEMA PERSONALIZADO ---
-        function deleteCustomSystem(e, id) {
+        // --- LÓGICA DE EXCLUSÃO DE QUALQUER SISTEMA ---
+        function deleteSystem(e, id) {
             e.preventDefault();
             e.stopPropagation();
-            
-            if (confirm("Deseja realmente remover este atalho personalizado?")) {
-                customSystems = customSystems.filter(sys => sys.id !== id);
+
+            const sys = systems.find(s => s.id === id);
+            if (!sys) return;
+
+            if (confirm(`Deseja realmente excluir o atalho para "${sys.title}"?`)) {
+                systems = systems.filter(s => s.id !== id);
                 favorites = favorites.filter(favId => favId !== id);
-                localStorage.setItem('portal_dniz_custom_systems', JSON.stringify(customSystems));
+                localStorage.setItem('portal_dniz_systems', JSON.stringify(systems));
                 localStorage.setItem('portal_dniz_favorites', JSON.stringify(favorites));
+                renderCategories();
+                renderDashboard();
+            }
+        }
+
+        // --- LÓGICA DE EDIÇÃO DE QUALQUER SISTEMA ---
+        function editSystem(e, id) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const sys = systems.find(s => s.id === id);
+            if (!sys) return;
+
+            editingSystemId = id;
+
+            // Preenche os campos do modal
+            document.getElementById('sysTitle').value = sys.title;
+            document.getElementById('sysUrl').value = sys.url;
+            document.getElementById('sysDescription').value = sys.description;
+            document.getElementById('sysCategory').value = sys.category;
+            document.getElementById('sysIcon').value = sys.icon;
+
+            // Ajusta o texto da interface do Modal para Edição
+            document.querySelector('#addSystemModal h3').textContent = "Editar Sistema / Link";
+            document.querySelector('#addSystemModal p').textContent = "Atualize as informações do atalho selecionado";
+            document.querySelector('#addSystemForm button[type="submit"] span').textContent = "Salvar Alterações";
+
+            openModal();
+        }
+
+        // --- RESTAURAR PADRÕES DE FÁBRICA ---
+        function restoreDefaults() {
+            if (confirm("Deseja realmente restaurar todos os sistemas para os padrões originais? Isso apagará as suas personalizações, links novos e alterações efetuadas.")) {
+                systems = [...defaultSystemsList];
+                favorites = [];
+                localStorage.setItem('portal_dniz_systems', JSON.stringify(systems));
+                localStorage.setItem('portal_dniz_favorites', JSON.stringify(favorites));
+                currentCategory = "all";
                 renderCategories();
                 renderDashboard();
             }
@@ -586,12 +639,11 @@
         // --- RENDERIZAR ABAS DE CATEGORIAS ---
         function renderCategories() {
             categoryTabsContainer.innerHTML = '';
-            const allSystems = getAllSystems();
             
             categories.forEach(cat => {
                 const count = cat.id === 'all' 
-                    ? allSystems.length 
-                    : allSystems.filter(s => s.category === cat.id).length;
+                    ? systems.length 
+                    : systems.filter(s => s.category === cat.id).length;
 
                 const btn = document.createElement('button');
                 btn.type = 'button';
@@ -633,12 +685,6 @@
             else if (sys.category === 'administrativo') badgeColorClass = "bg-purple-500/10 text-purple-400 border-purple-500/20";
             else if (sys.category === 'desenvolvimento') badgeColorClass = "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
 
-            const deleteButtonHtml = sys.isCustom ? `
-                <button onclick="deleteCustomSystem(event, '${sys.id}')" class="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-500 hover:text-rose-400 hover:border-rose-500/30 transition-all duration-200 shadow-sm flex items-center justify-center ml-1" title="Excluir atalho personalizado">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-            ` : '';
-
             return `
                 <a href="${sys.url}" target="_blank" class="block glass-card rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden ${sys.glowClass}">
                     <!-- Card Background Glow Effect on Hover -->
@@ -661,7 +707,15 @@
                                 <i data-lucide="star" class="w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}"></i>
                             </button>
 
-                            ${deleteButtonHtml}
+                            <!-- Edit Button -->
+                            <button onclick="editSystem(event, '${sys.id}')" class="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-500 hover:text-blue-400 hover:border-blue-500/25 transition-all duration-200 shadow-sm flex items-center justify-center" title="Editar atalho">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+
+                            <!-- Delete Button -->
+                            <button onclick="deleteSystem(event, '${sys.id}')" class="p-1.5 rounded-lg border border-slate-800 bg-slate-900/60 text-slate-500 hover:text-rose-400 hover:border-rose-500/30 transition-all duration-200 shadow-sm flex items-center justify-center" title="Excluir atalho">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
                         </div>
                     </div>
                     
@@ -685,10 +739,8 @@
         }
 
         function renderDashboard() {
-            const allSystems = getAllSystems();
-
             // 1. Renderiza Favoritos
-            const favSystems = allSystems.filter(sys => favorites.includes(sys.id));
+            const favSystems = systems.filter(sys => favorites.includes(sys.id));
             if (favSystems.length > 0) {
                 favoritesSection.classList.remove('hidden');
                 favoritesGrid.innerHTML = favSystems.map(sys => createCardHtml(sys, true)).join('');
@@ -698,7 +750,7 @@
             }
 
             // 2. Filtra Sistemas Principais
-            let filtered = allSystems;
+            let filtered = systems;
             
             // Filtro por Categoria
             if (currentCategory !== 'all') {
@@ -734,7 +786,7 @@
             lucide.createIcons();
         }
 
-        // --- MANIPULAÇÃO DO MODAL DE ADIÇÃO DE LINK ---
+        // --- MANIPULAÇÃO DO MODAL DE ADIÇÃO/EDIÇÃO DE LINK ---
         function openModal() {
             addSystemModal.classList.remove('hidden');
             document.getElementById('sysTitle').focus();
@@ -743,11 +795,18 @@
         function closeModal() {
             addSystemModal.classList.add('hidden');
             addSystemForm.reset();
+            editingSystemId = null;
+
+            // Restaura os textos originais de adição
+            document.querySelector('#addSystemModal h3').textContent = "Adicionar Novo Sistema / Link";
+            document.querySelector('#addSystemModal p').textContent = "Insira as informações do atalho que deseja adicionar ao portal";
+            document.querySelector('#addSystemForm button[type="submit"] span').textContent = "Salvar Sistema";
         }
 
         openAddModalBtn.addEventListener('click', openModal);
         closeAddModalBtn.addEventListener('click', closeModal);
         cancelAddModalBtn.addEventListener('click', closeModal);
+        resetSystemsBtn.addEventListener('click', restoreDefaults);
 
         // Fechar ao clicar fora da caixa do modal
         addSystemModal.addEventListener('click', (e) => {
@@ -756,7 +815,7 @@
             }
         });
 
-        // Adicionar novo sistema via formulário
+        // Adicionar/Editar sistema via formulário
         addSystemForm.addEventListener('submit', (e) => {
             e.preventDefault();
 
@@ -793,22 +852,43 @@
                 glowClass = "card-glow-indigo";
             }
 
-            const newSystem = {
-                id: "custom-" + Date.now(),
-                title: title,
-                url: url,
-                description: description,
-                icon: icon,
-                color: color,
-                bg: bg,
-                glowClass: glowClass,
-                category: category,
-                categoryLabel: categoryConfig ? categoryConfig.label : category,
-                isCustom: true
-            };
+            if (editingSystemId) {
+                // Modo Edição
+                const idx = systems.findIndex(s => s.id === editingSystemId);
+                if (idx > -1) {
+                    systems[idx] = {
+                        ...systems[idx],
+                        title: title,
+                        url: url,
+                        description: description,
+                        icon: icon,
+                        color: color,
+                        bg: bg,
+                        glowClass: glowClass,
+                        category: category,
+                        categoryLabel: categoryConfig ? categoryConfig.label : category
+                    };
+                }
+                editingSystemId = null;
+            } else {
+                // Modo Adição
+                const newSystem = {
+                    id: "custom-" + Date.now(),
+                    title: title,
+                    url: url,
+                    description: description,
+                    icon: icon,
+                    color: color,
+                    bg: bg,
+                    glowClass: glowClass,
+                    category: category,
+                    categoryLabel: categoryConfig ? categoryConfig.label : category,
+                    isCustom: true
+                };
+                systems.push(newSystem);
+            }
 
-            customSystems.push(newSystem);
-            localStorage.setItem('portal_dniz_custom_systems', JSON.stringify(customSystems));
+            localStorage.setItem('portal_dniz_systems', JSON.stringify(systems));
 
             closeModal();
             renderCategories();
